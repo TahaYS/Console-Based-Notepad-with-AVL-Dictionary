@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ncurses.h>
+#include <string>
 #include <fstream>
 using namespace std;
 
@@ -24,7 +25,7 @@ class AvlNode{
         AvlNode *right;
         int height;
 
-        AvlNode(string data = "", int height = 0, 
+        AvlNode(string data = "", int height = -1, 
             AvlNode *left = NULL, AvlNode *right = NULL)
         {
                 this -> data = data;
@@ -48,7 +49,7 @@ class Dictionary{
             return node -> height;
         }
 
-        AvlNode* RotateLeft(AvlNode* node) {
+        AvlNode* RotateLeft(AvlNode *node) {
             AvlNode* temp1 = node;
             AvlNode* temp2 = temp1 -> right;
             
@@ -62,7 +63,7 @@ class Dictionary{
         }
 
 
-        AvlNode* RotateRight(AvlNode* node) {
+        AvlNode* RotateRight(AvlNode *node) {
             AvlNode* temp1 = node;
             AvlNode* temp2 = temp1 -> left;
             
@@ -76,18 +77,53 @@ class Dictionary{
         }
 
 
-        AvlNode* RotateLeftRight(AvlNode* node) {
+        AvlNode* RotateLeftRight(AvlNode *node) {
             node -> left = RotateLeft(node -> left);
             return RotateRight(node);
         }
 
-        AvlNode* RotateRightLeft(AvlNode* node){
+        AvlNode* RotateRightLeft(AvlNode *node){
             node -> right = RotateRight(node -> right);
             return RotateLeft(node);
         }
 
-        void insert(string data){
+        void insert(string value, AvlNode *&node){
+            if ( node == NULL ){ 
+                node = new AvlNode;
+                node -> data = value;
+                node -> left = node -> right = NULL;
+                node -> height = 1;
+                return;
+            }
 
+            if(value < node -> data){
+                insert(value, node -> left);
+
+                if(Height(node -> left) - Height(node -> right) == 2){
+                    if(value < (node -> left -> data))
+                        node = RotateRight(node);
+                    else
+                        node = RotateLeftRight(node);
+                }
+
+            }
+
+            else if(value > node -> data){
+                insert(value, node -> right);
+
+                if(Height(node -> left) - Height(node -> right) == -2){
+                    if(value > (node -> right -> data))
+                        node = RotateLeft(node);
+                    else
+                        node = RotateRightLeft(node);
+                }
+            }
+
+            else if(value == node -> data){
+                return;
+            }
+            
+            node -> height = max(Height(node -> left), Height(node -> right)) + 1;
         }
 };
 
