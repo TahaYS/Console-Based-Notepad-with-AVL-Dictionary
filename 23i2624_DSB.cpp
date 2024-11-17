@@ -10,6 +10,13 @@ int len(string str){
     return count;
 }
 
+int max(int a, int b){
+    if(a > b)
+        return a;
+    else    
+        return b;
+}
+
 class AvlNode{
     public:
         string data;
@@ -34,6 +41,40 @@ class Dictionary{
         Dictionary(){
             this -> root = NULL;
         }
+
+        int Height(AvlNode *node){
+            if(node == NULL)
+                return -1;
+            return node -> height;
+        }
+
+        AvlNode* RotateLeft(){
+            AvlNode *temp1 = root;
+            AvlNode *temp2 = temp1 -> right;
+            
+            temp1 -> right = temp2 -> left;
+            temp2 -> left = temp1;
+            
+            temp1 -> height = Max( Height(temp1 -> left), Height(temp1 -> right) ) + 1;
+            temp2 -> height = Max( Height(temp2 -> right), temp1 -> height ) + 1;
+            return temp2; 
+        }
+
+        AvlNode* RotateRight(){
+            AvlNode* temp1 = root;
+            AvlNode* temp2 = temp1 -> left;
+            
+            temp1 -> left = temp2->right;
+            temp2 -> right = temp1;
+            
+            temp1 -> height = Max( Height(temp1 -> left), Height(temp1 -> right) ) + 1;
+            temp2 -> height = Max( Height(temp2 -> left), temp1 -> height ) + 1;
+            return temp2; 
+        }
+
+        void insert(string data){
+
+        }
 };
 
 int main(){
@@ -50,38 +91,38 @@ int main(){
 
 //     T->Element = X;
 
-//     T->Left = T->Right = NULL;
+//     T->left = T->right = NULL;
 
 //     }
 
 //     else{
 //         if( X < T->Element ){
-//             T->Left = Insert( X, T->Left );
+//             T->left = Insert( X, T->left );
 
-//             if( Height( T->Left ) - Height( T->Right ) == 2 )
+//             if( Height( T->left ) - Height( T->right ) == 2 )
 
-//             if( X < T->Left->Element )
+//             if( X < T->left->Element )
 
-//             T = RotateRight( T );
+//             T = Rotateright( T );
 
 //             else
-//                 T = RotateLeftRight( T );
+//                 T = Rotateleftright( T );
 
 //         }
 //         else if(X > T -> Element){
-//             T->Right = Insert( X, T->Right );
+//             T->right = Insert( X, T->right );
 
-//             if(Height( T->Left ) - Height( T->Right ) == -2 )
+//             if(Height( T->left ) - Height( T->right ) == -2 )
 
-//             if( X > T->Right->Element )
+//             if( X > T->right->Element )
 
-//             T = RotateLeft( T );
+//             T = Rotateleft( T );
 
 //             else
-//                 T = RotateRightLeft( T );
+//                 T = Rotaterightleft( T );
 //         }
 //         /* Else X is in the tree already; we'll do nothing */
-//         T->Height = Max( Height( T->Left ), Height( T->Right ) ) + 1;
+//         T->Height = Max( Height( T->left ), Height( T->right ) ) + 1;
 //         return T;
 //     }
 // }
