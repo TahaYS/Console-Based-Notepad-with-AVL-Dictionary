@@ -142,6 +142,26 @@ class Dictionary{
             inOrderTraversal(node->right);
         }
 
+        void makeDict(){
+            ifstream a1("dictionary.txt");
+
+            if(!a1){
+                cout<<"File not found\n";
+                return;
+            }
+            
+            else{
+                string word;
+                int count = 0;
+                while(a1 >> word && count != 5){
+                    insertByValue(word);
+                    count++;
+                }
+            }
+
+            a1.close();
+        }
+
         void insertByValue(string value){
             insert(value, root);
         }
@@ -153,36 +173,38 @@ class Dictionary{
 
 int main(){
     Dictionary dict;
+    dict.makeDict();
+    dict.printDict();
     // Test Case 1: Insert a sequence of words
-    cout << "Test Case 1: Insert a sequence of words:" << endl;
-    dict.insertByValue("apple");
-    dict.insertByValue("banana");
-    dict.insertByValue("cherry");
-    dict.insertByValue("date");
-    dict.printDict(); // Expected output: apple banana cherry date
+    // cout << "Test Case 1: Insert a sequence of words:" << endl;
+    // dict.insertByValue("apple");
+    // dict.insertByValue("banana");
+    // dict.insertByValue("cherry");
+    // dict.insertByValue("date");
+    // dict.printDict(); // Expected output: apple banana cherry date
 
-    // // Test Case 2: Insert words with varying lengths
-    cout << "\n\nTest Case 2: Insert words with varying lengths:" << endl;
-    dict.insertByValue("pear");
-    dict.insertByValue("kiwi");
-    dict.insertByValue("grape");
-    dict.printDict(); // Expected output: apple banana cherry date grape kiwi pear
+    // // // Test Case 2: Insert words with varying lengths
+    // cout << "\n\nTest Case 2: Insert words with varying lengths:" << endl;
+    // dict.insertByValue("pear");
+    // dict.insertByValue("kiwi");
+    // dict.insertByValue("grape");
+    // dict.printDict(); // Expected output: apple banana cherry date grape kiwi pear
 
-    // // // Test Case 3: Insert words in lexicographical order
-    cout << "\n\nTest Case 3: Insert words in lexicographical order:" << endl;
-    dict.insertByValue("apple");
-    dict.insertByValue("banana");
-    dict.insertByValue("cherry");
-    dict.insertByValue("date");
-    dict.printDict(); // Expected output: apple banana cherry date
+    // // // // Test Case 3: Insert words in lexicographical order
+    // cout << "\n\nTest Case 3: Insert words in lexicographical order:" << endl;
+    // dict.insertByValue("apple");
+    // dict.insertByValue("banana");
+    // dict.insertByValue("cherry");
+    // dict.insertByValue("date");
+    // dict.printDict(); // Expected output: apple banana cherry date
 
-    // // Test Case 4: Insert words in reverse lexicographical order
-    cout << "Test Case 4: Insert words in reverse lexicographical order:" << endl;
-    dict.insertByValue("date");
-    dict.insertByValue("cherry");
-    dict.insertByValue("banana");
-    dict.insertByValue("apple");
-    dict.printDict(); // Expected output: apple banana cherry date
+    // // // Test Case 4: Insert words in reverse lexicographical order
+    // cout << "Test Case 4: Insert words in reverse lexicographical order:" << endl;
+    // dict.insertByValue("date");
+    // dict.insertByValue("cherry");
+    // dict.insertByValue("banana");
+    // dict.insertByValue("apple");
+    // dict.printDict(); // Expected output: apple banana cherry date
 
     // return 0;
 }
