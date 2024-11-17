@@ -25,7 +25,7 @@ class AvlNode{
         AvlNode *right;
         int height;
 
-        AvlNode(string data = "", int height = -1, 
+        AvlNode(string data = "", int height = 0, 
             AvlNode *left = NULL, AvlNode *right = NULL)
         {
                 this -> data = data;
@@ -45,7 +45,7 @@ class Dictionary{
 
         int Height(AvlNode *node){
             if(node == NULL)
-                return -1;
+                return 0;
             return node -> height;
         }
 
@@ -91,12 +91,13 @@ class Dictionary{
             if ( node == NULL ){ 
                 node = new AvlNode;
                 node -> data = value;
-                node -> left = node -> right = NULL;
+                //node -> left = node -> right = NULL;
                 node -> height = 1;
                 return;
             }
 
             if(value < node -> data){
+                
                 insert(value, node -> left);
 
                 if(Height(node -> left) - Height(node -> right) == 2){
@@ -112,10 +113,16 @@ class Dictionary{
                 insert(value, node -> right);
 
                 if(Height(node -> left) - Height(node -> right) == -2){
-                    if(value > (node -> right -> data))
+                    //cout<<"HELLO\n";
+                    if(value > (node -> right -> data)){
+                        //cout<<"HELLO\n";
                         node = RotateLeft(node);
-                    else
+
+                    }
+                    else{
+                        
                         node = RotateRightLeft(node);
+                    }
                 }
             }
 
@@ -125,54 +132,59 @@ class Dictionary{
             
             node -> height = max(Height(node -> left), Height(node -> right)) + 1;
         }
+
+        void inOrderTraversal(AvlNode* node) {
+            if (node == NULL) 
+                return;
+            
+            inOrderTraversal(node->left);
+            cout << node->data << " ";
+            inOrderTraversal(node->right);
+        }
+
+        void insertByValue(string value){
+            insert(value, root);
+        }
+
+        void printDict(){
+            inOrderTraversal(root);
+        }
 };
 
 int main(){
-    string str = "HELLO";
-    int size = len(str);
-    cout<< size;
+    Dictionary dict;
+    // Test Case 1: Insert a sequence of words
+    cout << "Test Case 1: Insert a sequence of words:" << endl;
+    dict.insertByValue("apple");
+    dict.insertByValue("banana");
+    dict.insertByValue("cherry");
+    dict.insertByValue("date");
+    dict.printDict(); // Expected output: apple banana cherry date
+
+    // // Test Case 2: Insert words with varying lengths
+    cout << "\n\nTest Case 2: Insert words with varying lengths:" << endl;
+    dict.insertByValue("pear");
+    dict.insertByValue("kiwi");
+    dict.insertByValue("grape");
+    dict.printDict(); // Expected output: apple banana cherry date grape kiwi pear
+
+    // // // Test Case 3: Insert words in lexicographical order
+    cout << "\n\nTest Case 3: Insert words in lexicographical order:" << endl;
+    dict.insertByValue("apple");
+    dict.insertByValue("banana");
+    dict.insertByValue("cherry");
+    dict.insertByValue("date");
+    dict.printDict(); // Expected output: apple banana cherry date
+
+    // // Test Case 4: Insert words in reverse lexicographical order
+    cout << "Test Case 4: Insert words in reverse lexicographical order:" << endl;
+    dict.insertByValue("date");
+    dict.insertByValue("cherry");
+    dict.insertByValue("banana");
+    dict.insertByValue("apple");
+    dict.printDict(); // Expected output: apple banana cherry date
+
+    // return 0;
 }
 
 
-// AvlTree Insert( ElementType X, AvlTree T ){
-//     if ( T == NULL ){ /* Create and return a one-node tree */
-
-//     T = new AvlNode;
-
-//     T->Element = X;
-
-//     T->left = T->right = NULL;
-
-//     }
-
-//     else{
-//         if( X < T->Element ){
-//             T->left = Insert( X, T->left );
-
-//             if( Height( T->left ) - Height( T->right ) == 2 )
-
-//             if( X < T->left->Element )
-
-//             T = Rotateright( T );
-
-//             else
-//                 T = Rotateleftright( T );
-
-//         }
-//         else if(X > T -> Element){
-//             T->right = Insert( X, T->right );
-
-//             if(Height( T->left ) - Height( T->right ) == -2 )
-
-//             if( X > T->right->Element )
-
-//             T = Rotateleft( T );
-
-//             else
-//                 T = Rotaterightleft( T );
-//         }
-//         /* Else X is in the tree already; we'll do nothing */
-//         T->Height = Max( Height( T->left ), Height( T->right ) ) + 1;
-//         return T;
-//     }
-// }
