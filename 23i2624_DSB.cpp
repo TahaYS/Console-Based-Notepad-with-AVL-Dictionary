@@ -152,10 +152,8 @@ class Dictionary{
             
             else{
                 string word;
-                int count = 0;
-                while(a1 >> word && count != 5){
+                while(a1 >> word){
                     insertByValue(word);
-                    count++;
                 }
             }
 
@@ -171,42 +169,82 @@ class Dictionary{
         }
 };
 
+struct Node{
+    char data;
+    Node *next;
+    Node *prev;
+
+    Node(char data = "", Node *next = NULL, Node *prev = NULL){
+        this -> data = data;
+        this -> next = next;
+        this -> prev = prev;
+    }
+};
+
+class Linklist{
+    Node *head;
+    Node *tail;
+    public:
+        Linklist(){
+            head = NULL;
+            tail = NULL;
+        }
+
+        void insert(char value){
+            
+            Node *newNode = new Node;
+            newNode -> data = value;
+            
+            if(head == NULL){
+                tail = newNode;
+                tail -> prev = newNode;
+                tail -> next = newNode;
+                return;
+            }
+            
+            else{
+                newNode -> next = tail -> next;
+                newNode -> prev = tail;
+                tail -> next -> prev = newNode;
+                tail -> next = newNode;
+                tail = newNode;
+            }
+        }
+
+        void deleteAtEnd(){
+            if(head == NULL)
+                return;
+
+            if(head == tail){
+                delete head;
+                head = tail = NULL;
+                return;
+            }
+
+            Node *temp = tail;
+            tail = tail -> prev;
+            tail -> next = head;
+            head -> prev = tail;
+            
+            delete temp;
+        }
+};
+
+class Queue{
+    private:
+        Node *front;
+        Node *rear;
+    public:
+        Queue(){
+            this ->front = NULL;
+            this ->rear = NULL;
+        }
+};
+
 int main(){
     Dictionary dict;
     dict.makeDict();
-    dict.printDict();
-    // Test Case 1: Insert a sequence of words
-    // cout << "Test Case 1: Insert a sequence of words:" << endl;
-    // dict.insertByValue("apple");
-    // dict.insertByValue("banana");
-    // dict.insertByValue("cherry");
-    // dict.insertByValue("date");
-    // dict.printDict(); // Expected output: apple banana cherry date
-
-    // // // Test Case 2: Insert words with varying lengths
-    // cout << "\n\nTest Case 2: Insert words with varying lengths:" << endl;
-    // dict.insertByValue("pear");
-    // dict.insertByValue("kiwi");
-    // dict.insertByValue("grape");
-    // dict.printDict(); // Expected output: apple banana cherry date grape kiwi pear
-
-    // // // // Test Case 3: Insert words in lexicographical order
-    // cout << "\n\nTest Case 3: Insert words in lexicographical order:" << endl;
-    // dict.insertByValue("apple");
-    // dict.insertByValue("banana");
-    // dict.insertByValue("cherry");
-    // dict.insertByValue("date");
-    // dict.printDict(); // Expected output: apple banana cherry date
-
-    // // // Test Case 4: Insert words in reverse lexicographical order
-    // cout << "Test Case 4: Insert words in reverse lexicographical order:" << endl;
-    // dict.insertByValue("date");
-    // dict.insertByValue("cherry");
-    // dict.insertByValue("banana");
-    // dict.insertByValue("apple");
-    // dict.printDict(); // Expected output: apple banana cherry date
-
-    // return 0;
+   
 }
 
 
