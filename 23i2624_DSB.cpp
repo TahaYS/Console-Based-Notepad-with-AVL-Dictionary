@@ -2,6 +2,8 @@
 #include <ncurses.h>
 #include <string>
 #include <cstring>
+#include <termios.h>
+#include <unistd.h>
 #include <fstream>
 using namespace std;
 
@@ -12,6 +14,13 @@ void init_ncurses() {
     keypad(stdscr, TRUE); // Enable special keys (e.g., arrow keys)
     noecho();             // Don't display user input
     curs_set(0);          // Hide cursor
+}
+
+void disableFlowControl() {
+    struct termios t;
+    tcgetattr(STDIN_FILENO, &t);
+    t.c_iflag &= ~(IXON | IXOFF | IXANY);  // Disable flow control
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
 }
 
 int len(string str){
@@ -191,54 +200,70 @@ struct Node{
     }
 };
 
-class Linklist{
+class Linklist {
     Node *head;
     Node *tail;
+
     public:
-        Linklist(){
+        Linklist() {
             head = NULL;
             tail = NULL;
         }
 
-        void insert(char value){
-            
+        void insert(char value) {
             Node *newNode = new Node;
-            newNode -> data = value;
-            
-            if(head == NULL){
-                tail = newNode;
-                tail -> prev = newNode;
-                tail -> next = newNode;
-                return;
-            }
-            
-            else{
-                newNode -> next = tail -> next;
-                newNode -> prev = tail;
-                tail -> next -> prev = newNode;
-                tail -> next = newNode;
-                tail = newNode;
+            newNode->data = value;
+
+            if (head == NULL) { // If list is empty
+                head = tail = newNode;
+                head->prev = head;
+                head->next = head; // Circular links
+            } else { // If list is not empty
+                newNode->next = head;  // New node points to head
+                newNode->prev = tail;  // New node points to tail
+                tail->next = newNode;  // Tail points to new node
+                head->prev = newNode;  // Head points back to new node
+                tail = newNode;        // Update tail to the new node
             }
         }
 
-        void deleteAtEnd(){
-            if(head == NULL)
+        void deleteAtEnd() {
+            if (head == NULL) // If list is empty
                 return;
 
-            if(head == tail){
+            if (head == tail) { // If only one node in the list
                 delete head;
                 head = tail = NULL;
                 return;
             }
 
             Node *temp = tail;
-            tail = tail -> prev;
-            tail -> next = head;
-            head -> prev = tail;
-            
+            tail = tail->prev;
+            tail->next = head;
+            head->prev = tail;
             delete temp;
         }
+
+        void emptyList() {
+            while (head != NULL)
+                deleteAtEnd();
+        }
+
+        string wholeList() {
+            Node *temp = head;
+            string value = "";
+
+            if (head != NULL) {
+                do {
+                    value += temp->data; // Collect data from each node
+                    temp = temp->next;
+                } while (temp != head); // Stop when we circle back to head
+            }
+
+            return value;
+        }
 };
+
 
 class Queue{
     private:
@@ -277,10 +302,47 @@ class Queue{
             }
             return value;
         }
+
+        bool isEmpty(){
+            if(front == NULL)
+                return true;
+            else
+                return false;
+        }
+
+        char dequeueAtEnd(){
+            Node *temp = front;
+            if(front == NULL)
+                return '\0';
+
+            if(front == rear){
+                char value = rear -> data;
+                delete rear;
+                front = rear = NULL;
+                return value;
+            }
+
+            while(temp -> next != rear)
+                temp = temp -> next;
+            char value = rear -> data;
+            delete rear;
+            rear = temp;
+            rear -> next = NULL;
+
+            return value;
+        }
+
+        void clearQueue(){
+
+            while(front != NULL)
+                dequeue();
+        }
+
 };
 
-void manageInputWindow() {
+void manageInputWindow(Linklist &list, Queue &queue) {
     // Initialize ncurses
+    disableFlowControl();
     initscr();
     cbreak();
     noecho();
@@ -316,12 +378,16 @@ void manageInputWindow() {
                 index--;
                 buffer[index] = '\0';
 
+                // Delete the last character from Linklist and Queue
+                list.deleteAtEnd();
+                queue.dequeueAtEnd();
+
                 if (cur_x > 1) {
                     cur_x--;
                 } else if (cur_y > 1) {
                     cur_y--;
                     cur_x = width - 2; // Move to the end of the previous line
-                    // Adjust cursor to the position of the last character on the previous line
+                    // Adjust cursor to the position in front of the last character on the previous line
                     while (cur_x > 1 && mvwinch(win, cur_y, cur_x - 1) == ' ') {
                         cur_x--;
                     }
@@ -330,52 +396,169 @@ void manageInputWindow() {
                 wmove(win, cur_y, cur_x);
             }
         } else if (ch == '\n') { // Handle Enter key
+            list.insert(ch);
             if (cur_y < height - 2) {
                 cur_y++;
                 cur_x = 1;
             }
-        } else if (ch == 12) { // Ctrl+L (ASCII code for Ctrl+L is 12)
-            // Leave functionality empty for user implementation
-        } else if (ch == 19) { // Ctrl+S (ASCII code for Ctrl+S is 19)
-            // Leave functionality empty for user implementation
-        } else { // Regular characters
-            if (index < sizeof(buffer) - 1) { // Prevent buffer overflow
-                // Handle word wrapping
-                if (cur_x >= width - 2) { // If at the right edge of the window
-                    // Find the start of the current word in the buffer
-                    int word_start = index - 1;
-                    while (word_start >= 0 && buffer[word_start] != ' ') {
-                        word_start--;
+        } 
+        else if (ch == 12) { // Ctrl+L (ASCII code for Ctrl+L is 12)
+            // Empty both the linked list and the queue
+            list.emptyList();
+            queue.clearQueue();
+
+            // Prompt for the filename
+            char filename[256];
+            mvprintw(7, 7, "Enter file name: ");
+            refresh();
+
+            echo();  // Enable echo to show typed characters
+            getstr(filename);  // Get the file name input
+            noecho();  // Disable echo again
+
+            clear(); // Clear the screen
+
+            // Create a new window to display the file content inside the rectangle
+            int height = 20, width = 70, start_y = 5, start_x = 5;
+            WINDOW* win = newwin(height, width, start_y, start_x);
+            box(win, 0, 0); // Draw the border
+            wrefresh(win);
+
+            // Open the file
+            ifstream file(filename);
+
+            if (!file) {
+                mvwprintw(win, 1, 1, "File not found");
+                wrefresh(win);
+            } else {
+                // Read the file line by line
+                string line;
+                int temp_y = 1; // Start on the first line (row 1)
+                
+                while (getline(file, line)) {
+                    int temp_x = 1; // Reset horizontal cursor position at the beginning of each line
+                    
+                    // Insert each character of the line into the linked list and queue
+                    for (char file_char : line) {
+                        list.insert(file_char);
+                        //queue.enqueue(file_char); // Uncomment this line if you want to enqueue as well
+                        
+                        // Display character on the ncurses window
+                        mvwaddch(win, temp_y, temp_x, file_char);
+                        temp_x++; // Move cursor to the next column
                     }
-                    word_start++; // Adjust to the first character of the word
 
-                    if (word_start < index) { // If a word exists to move
-                        // Clear the word from the current line
-                        for (int i = word_start; i < index; i++) {
-                            mvwaddch(win, cur_y, cur_x - (index - i), ' ');
-                        }
-                        // Move cursor and word to the next line
-                        cur_y++;
-                        cur_x = 1;
-
-                        // Redraw the word on the new line
-                        for (int i = word_start; i < index; i++) {
-                            mvwaddch(win, cur_y, cur_x++, buffer[i]);
-                        }
-                    } else { // If the word doesn't fit, wrap normally
-                        cur_y++;
-                        cur_x = 1;
+                    // After each line, move to the next row and leave a line space
+                    temp_y++;
+                    if (temp_y >= height - 1) { // Prevent overflow of the window
+                        break;
                     }
                 }
 
+                // Refresh the window to show the file content
+                wrefresh(win);
+            }
+            file.close();
+            // Clear the prompt and any other displayed message
+            move(7, 7);
+            clrtoeol();
+        }
+ 
+        else if (ch == 19) { // Ctrl+S (ASCII code for Ctrl+S is 19)
+            // Get the content from the linked list
+            string content = list.wholeList();
+
+            // Debug: Display the content on the console (for debugging purposes)
+            //mvprintw(height + 2, 0, "DEBUG: Content to save: %s", content.c_str());
+            refresh();
+
+            // Prompt for the filename
+            char filename[256];
+            mvprintw(7, 7, "Enter file name to save: ");
+            refresh();
+
+            echo();  // Enable echo to show typed characters
+            getstr(filename);  // Get the file name input
+            noecho();  // Disable echo again
+
+            // Open the file for writing, create the file if it doesn't exist
+            ofstream file(filename, ios::out | ios::trunc); // `ios::trunc` to create or overwrite the file
+
+            if (!file) {
+                mvprintw(9, 7, "Error opening file for writing.");
+                refresh();
+            } else {
+                // Write the content to the file
+                file << content;
+
+                mvprintw(9, 7, "File saved successfully.");
+                refresh();
+            }
+
+            // Clear the prompt message
+            move(7, 7);
+            clrtoeol();
+        }
+        
+        else if (ch == ' ') { // Space key
+            string word = "";
+            list.insert(ch);
+            // Collect the word from the queue
+            while (!queue.isEmpty()) {
+                word += queue.dequeue(); 
+            }
+
+            // Display the word below the window (but not interfering with it)
+            move(height + 1, 0);
+            clrtoeol();
+
+            // Display the last word
+            mvprintw(start_y + height + 1, start_x, "Last word: %s", word.c_str());
+            refresh(); // Refresh the main screen
+
+            // After displaying the word, empty the word and queue
+            // Now the queue is empty, so next word will be collected separately
+
+            // Add a space to the buffer
+            if (index < sizeof(buffer) - 1) {
                 buffer[index++] = ch;
                 buffer[index] = '\0';
-                mvwaddch(win, cur_y, cur_x, ch); // Add character to the window
+                mvwaddch(win, cur_y, cur_x, ch);
                 if (cur_x < width - 2) {
                     cur_x++;
+                } else {
+                    cur_y++;
+                    cur_x = 1;
+                }
+            }
+
+            // Redraw the rectangle to prevent it from disappearing
+            wrefresh(win);
+        }
+ 
+        // Insert regular character
+        else if (isprint(ch)) {
+            // Add character to buffer and linked list
+            if (index < sizeof(buffer) - 1) {
+                buffer[index++] = ch;
+                buffer[index] = '\0';
+                list.insert(ch);
+                queue.enqueue(ch);
+
+                // Insert the character in the ncurses window
+                mvwaddch(win, cur_y, cur_x, ch);
+
+                // Update cursor position
+                if (cur_x < width - 2) {
+                    cur_x++;
+                } else {
+                    // Handle word wrapping to next line
+                    cur_y++;
+                    cur_x = 1;
                 }
             }
         }
+
         wrefresh(win);
     }
 
@@ -386,9 +569,10 @@ void manageInputWindow() {
 
 int main(){
     Dictionary dict;
+    Linklist list;
+    Queue queue;
     dict.makeDict();
-    manageInputWindow();
-    
+    manageInputWindow(list, queue);
     
 }
 
