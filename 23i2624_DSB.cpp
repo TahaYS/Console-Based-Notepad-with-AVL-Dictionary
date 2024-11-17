@@ -1,8 +1,18 @@
 #include <iostream>
 #include <ncurses.h>
 #include <string>
+#include <cstring>
 #include <fstream>
 using namespace std;
+
+void init_ncurses() {
+    // Initialize ncurses
+    initscr();            // Start ncurses mode
+    raw();                // Disable line buffering (for immediate input)
+    keypad(stdscr, TRUE); // Enable special keys (e.g., arrow keys)
+    noecho();             // Don't display user input
+    curs_set(0);          // Hide cursor
+}
 
 int len(string str){
     int count = 0;
@@ -269,16 +279,116 @@ class Queue{
         }
 };
 
+void manageInputWindow() {
+    // Initialize ncurses
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+    curs_set(1);
+
+    // Clear the screen to remove artifacts
+    clear();
+    refresh();
+
+    // Create a larger window
+    int height = 20, width = 70, start_y = 5, start_x = 5; // Bigger rectangle
+    WINDOW* win = newwin(height, width, start_y, start_x);
+    box(win, 0, 0);
+    wrefresh(win);
+
+    // Instructions
+    mvprintw(0, 0, "Type below. Press ESC to exit. Ctrl+L to load file and Ctrl+S to save file.");
+    refresh();
+
+    char buffer[1024];    // Buffer for the text being typed
+    int cur_x = 1, cur_y = 1; // Cursor position within the window
+    int index = 0;        // Position in the buffer
+    memset(buffer, 0, sizeof(buffer)); // Initialize buffer
+
+    while (true) {
+        int ch = wgetch(win); // Get input from the user
+
+        if (ch == 27) { // ESC key to exit
+            break;
+        } else if (ch == KEY_BACKSPACE || ch == 127) { // Handle backspace
+            if (index > 0) {
+                index--;
+                buffer[index] = '\0';
+
+                if (cur_x > 1) {
+                    cur_x--;
+                } else if (cur_y > 1) {
+                    cur_y--;
+                    cur_x = width - 2; // Move to the end of the previous line
+                    // Adjust cursor to the position of the last character on the previous line
+                    while (cur_x > 1 && mvwinch(win, cur_y, cur_x - 1) == ' ') {
+                        cur_x--;
+                    }
+                }
+                mvwaddch(win, cur_y, cur_x, ' '); // Clear character
+                wmove(win, cur_y, cur_x);
+            }
+        } else if (ch == '\n') { // Handle Enter key
+            if (cur_y < height - 2) {
+                cur_y++;
+                cur_x = 1;
+            }
+        } else if (ch == 12) { // Ctrl+L (ASCII code for Ctrl+L is 12)
+            // Leave functionality empty for user implementation
+        } else if (ch == 19) { // Ctrl+S (ASCII code for Ctrl+S is 19)
+            // Leave functionality empty for user implementation
+        } else { // Regular characters
+            if (index < sizeof(buffer) - 1) { // Prevent buffer overflow
+                // Handle word wrapping
+                if (cur_x >= width - 2) { // If at the right edge of the window
+                    // Find the start of the current word in the buffer
+                    int word_start = index - 1;
+                    while (word_start >= 0 && buffer[word_start] != ' ') {
+                        word_start--;
+                    }
+                    word_start++; // Adjust to the first character of the word
+
+                    if (word_start < index) { // If a word exists to move
+                        // Clear the word from the current line
+                        for (int i = word_start; i < index; i++) {
+                            mvwaddch(win, cur_y, cur_x - (index - i), ' ');
+                        }
+                        // Move cursor and word to the next line
+                        cur_y++;
+                        cur_x = 1;
+
+                        // Redraw the word on the new line
+                        for (int i = word_start; i < index; i++) {
+                            mvwaddch(win, cur_y, cur_x++, buffer[i]);
+                        }
+                    } else { // If the word doesn't fit, wrap normally
+                        cur_y++;
+                        cur_x = 1;
+                    }
+                }
+
+                buffer[index++] = ch;
+                buffer[index] = '\0';
+                mvwaddch(win, cur_y, cur_x, ch); // Add character to the window
+                if (cur_x < width - 2) {
+                    cur_x++;
+                }
+            }
+        }
+        wrefresh(win);
+    }
+
+    // End ncurses mode
+    delwin(win);
+    endwin();
+}
+
 int main(){
-    // Dictionary dict;
-    // dict.makeDict();
-    Queue  obj1;
-    obj1.enqueue('a');
-    obj1.enqueue('b');
-    obj1.enqueue('c');
-    cout<<obj1.dequeue();
-    cout<<obj1.dequeue();
-    cout<<obj1.dequeue();
+    Dictionary dict;
+    dict.makeDict();
+    manageInputWindow();
+    
     
 }
 
