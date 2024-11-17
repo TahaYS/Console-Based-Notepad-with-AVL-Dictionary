@@ -174,7 +174,7 @@ struct Node{
     Node *next;
     Node *prev;
 
-    Node(char data = "", Node *next = NULL, Node *prev = NULL){
+    Node(char data = '-', Node *next = NULL, Node *prev = NULL){
         this -> data = data;
         this -> next = next;
         this -> prev = prev;
@@ -239,12 +239,47 @@ class Queue{
             this ->front = NULL;
             this ->rear = NULL;
         }
+
+        void enqueue(char value){
+            Node *newNode = new Node;
+            newNode -> data = value;
+            if(front == NULL){
+                front = rear = newNode;
+                return;
+            }
+
+            else{
+                rear -> next = newNode;
+                rear = newNode;
+            }
+        }
+
+        char dequeue(){
+            char value;
+            if(front == NULL)
+                return '\0';
+            
+            else{
+                Node *temp = front;
+                front = front -> next;
+                value = temp -> data;
+                delete temp;
+            }
+            return value;
+        }
 };
 
 int main(){
-    Dictionary dict;
-    dict.makeDict();
-   
+    // Dictionary dict;
+    // dict.makeDict();
+    Queue  obj1;
+    obj1.enqueue('a');
+    obj1.enqueue('b');
+    obj1.enqueue('c');
+    cout<<obj1.dequeue();
+    cout<<obj1.dequeue();
+    cout<<obj1.dequeue();
+    
 }
 
 
