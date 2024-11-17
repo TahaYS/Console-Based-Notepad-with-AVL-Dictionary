@@ -48,28 +48,42 @@ class Dictionary{
             return node -> height;
         }
 
-        AvlNode* RotateLeft(){
-            AvlNode *temp1 = root;
-            AvlNode *temp2 = temp1 -> right;
+        AvlNode* RotateLeft(AvlNode* node) {
+            AvlNode* temp1 = node;
+            AvlNode* temp2 = temp1 -> right;
             
             temp1 -> right = temp2 -> left;
             temp2 -> left = temp1;
+             
+            temp1 -> height = max(Height(temp1 -> left), Height(temp1 -> right)) + 1;
+            temp2 -> height = max(Height(temp2 -> right), temp1 -> height) + 1;
             
-            temp1 -> height = Max( Height(temp1 -> left), Height(temp1 -> right) ) + 1;
-            temp2 -> height = Max( Height(temp2 -> right), temp1 -> height ) + 1;
             return temp2; 
         }
 
-        AvlNode* RotateRight(){
-            AvlNode* temp1 = root;
+
+        AvlNode* RotateRight(AvlNode* node) {
+            AvlNode* temp1 = node;
             AvlNode* temp2 = temp1 -> left;
             
-            temp1 -> left = temp2->right;
+            temp1 -> left = temp2 -> right;
             temp2 -> right = temp1;
             
-            temp1 -> height = Max( Height(temp1 -> left), Height(temp1 -> right) ) + 1;
-            temp2 -> height = Max( Height(temp2 -> left), temp1 -> height ) + 1;
+            temp1 -> height = max(Height(temp1 -> left), Height(temp1 -> right)) + 1;
+            temp2 -> height = max(Height(temp2 -> left), temp1 -> height) + 1;
+            
             return temp2; 
+        }
+
+
+        AvlNode* RotateLeftRight(AvlNode* node) {
+            node -> left = RotateLeft(node -> left);
+            return RotateRight(node);
+        }
+
+        AvlNode* RotateRightLeft(AvlNode* node){
+            node -> right = RotateRight(node -> right);
+            return RotateLeft(node);
         }
 
         void insert(string data){
